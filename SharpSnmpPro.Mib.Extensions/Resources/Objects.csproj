@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <PropertyGroup Label="Configuration">
+    <RootNamespace>Lextm.SharpSnmpPro.Testing</RootNamespace>
+    <Configurations>Debug;Release</Configurations>
+    <LangVersion>7.2</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard1.3;net452</TargetFrameworks>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Version>1.0.0</Version>
+    <Description>#SNMP Pro Objects Sample.</Description>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Lextm.SharpSnmpLib" Version="11.0.0" />
+    <PackageReference Include="Lextm.SharpSnmpLib.Engine" Version="11.0.0" />
+  </ItemGroup>
+</Project>
