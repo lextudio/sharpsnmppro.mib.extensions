@@ -248,7 +248,7 @@ namespace Lextm.SharpSnmpPro.Mib.Registry
                 case Access.NotImplemented:
                     return "not-implmented";
                 default:
-                    throw new ArgumentOutOfRangeException("access");
+                    throw new ArgumentOutOfRangeException(nameof(access));
             }
         }
     }
