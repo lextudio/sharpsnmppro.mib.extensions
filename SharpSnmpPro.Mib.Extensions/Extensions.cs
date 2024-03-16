@@ -150,13 +150,13 @@ namespace Lextm.SharpSnmpPro.Mib.Registry
                 generated.WriteLine("        }");
                 generated.WriteLine("    }");
 
-                generated.WriteLine("    partial class {0}", className);
-                generated.WriteLine("    {");
-                generated.WriteLine("        public {0}()", className);
-                generated.WriteLine("        {");
-                generated.WriteLine("            // TODO: add rows and columns here.");
-                generated.WriteLine("        }");
-                generated.WriteLine("    }");
+                custom?.WriteLine("    partial class {0}", className);
+                custom?.WriteLine("    {");
+                custom?.WriteLine("        public {0}()", className);
+                custom?.WriteLine("        {");
+                custom?.WriteLine("            // TODO: add rows and columns here.");
+                custom?.WriteLine("        }");
+                custom?.WriteLine("    }");
                 return;
             }
 
