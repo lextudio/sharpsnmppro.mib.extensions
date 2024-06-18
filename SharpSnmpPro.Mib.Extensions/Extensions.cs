@@ -188,28 +188,18 @@ namespace Lextm.SharpSnmpPro.Mib.Registry
             generated.WriteLine(
                 macro.Type == DefinitionType.Scalar
                     ? "        public {0}() : base(\"{1}.0\")"
-                    : "        public {0}(int index) : base(\"{1}.{{0}}\", index)",
+                    : "        public {0}(params string[] indexes) : base(\"{1}.{{0}}\", string.Join(indexes))",
                 className,
                 id);
             generated.WriteLine("        {");
-            generated.WriteLine(
-                macro.Type == DefinitionType.Scalar
-                    ? "            OnCreate();"
-                    : "            OnCreate(index);");
             generated.WriteLine("        }");
             generated.WriteLine("    }");
 
             custom?.WriteLine("    partial class {0}", className);
             custom?.WriteLine("    {");
-            custom?.WriteLine("        private ISnmpData _data = {0};", Default(macro.ResolvedSyntax.GetLastType()));
+            custom?.WriteLine("        // TODO: add new constructors here.");
             custom?.WriteLine();
-            custom?.WriteLine(
-                macro.Type == DefinitionType.Scalar
-                    ? "        void OnCreate()"
-                    : "        void OnCreate(int index)");
-            custom?.WriteLine("        {");
-            custom?.WriteLine("            // TODO: initialization here");
-            custom?.WriteLine("        }");
+            custom?.WriteLine("        private ISnmpData _data = {0}; // TODO: remove initial assignment if you want to do it in constructors.", Default(macro.ResolvedSyntax.GetLastType()));
             custom?.WriteLine();
             custom?.WriteLine("        public override ISnmpData Data");
             custom?.WriteLine("        {");
