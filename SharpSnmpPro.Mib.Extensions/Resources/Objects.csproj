@@ -12,7 +12,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Lextm.SharpSnmpLib" Version="12.1.0" />
+    <PackageReference Include="Lextm.SharpSnmpLib" Version="12.5.3" />
     <PackageReference Include="Samples.Engine" Version="1.0.0" />
   </ItemGroup>
 </Project>
