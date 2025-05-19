@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Lextm.SharpSnmpLib;
 
 namespace Lextm.SharpSnmpPro.Mib.Registry
 {
@@ -96,7 +97,7 @@ namespace Lextm.SharpSnmpPro.Mib.Registry
             generated.WriteLine();
             custom?.WriteLine();
             var className = macro.Name.Replace('-', '_');
-            var id = SharpSnmpLib.ObjectIdentifier.Convert(macro.GetObjectIdentifier());
+            var id = Lextm.SharpSnmpLib.ObjectIdentifier.Convert(macro.GetObjectIdentifier());
             if (macro.Type == DefinitionType.Table)
             {
                 generated.WriteLine("    /// <remarks>");
