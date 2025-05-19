@@ -25,6 +25,7 @@
     <ItemGroup>
       <_AssembliesToMerge Include="$(_MainAssembly)" />
       <_AssembliesToMerge Include="$(_OutputDir)SharpSnmpPro.Mib.dll" />
+      <_AssembliesToMerge Include="$(_OutputDir)SharpSnmpPro.Mib.Extensions.dll" />
       <_AssembliesToMerge Include="$(_OutputDir)SharpSnmpLib.dll" />
       <_AssembliesToMerge Include="$(_OutputDir)Antlr4.Runtime.Standard.dll" />
     </ItemGroup>
@@ -37,7 +38,10 @@
 
   <!-- Reference SharpSnmpPro.Mib and ensure it's copied to the output -->
   <ItemGroup>
-    <ProjectReference Include="..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj">
+    <ProjectReference Include="..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj">
+      <Private>true</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SharpSnmpPro.Mib.Extensions\SharpSnmpPro.Mib.Extensions.csproj">
       <Private>true</Private>
     </ProjectReference>
   </ItemGroup>
