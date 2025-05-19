@@ -1,0 +1,28 @@
+// This file shows a sample implementation of a partial class that will be combined with the generated code
+using System;
+using Lextm.SharpSnmpLib;
+using Samples.Pipeline;
+
+namespace IP_MIB
+{
+    // The Source Generator creates a partial class with this signature:
+    // public sealed partial class ipForwarding : ScalarObject
+    partial class ipForwarding
+    {
+        private ISnmpData _data = new Integer32(0);
+
+        // This method is called by the constructor in the generated code
+        partial void OnCreate()
+        {
+            // Your initialization logic here
+            // For example, get data from the system's network configuration
+        }
+
+        // The Source Generator adds this property, but the implementation is here
+        public override ISnmpData Data
+        {
+            get { return _data; }
+            set { _data = value; }
+        }
+    }
+}

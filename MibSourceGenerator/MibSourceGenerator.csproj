@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <OutputItemType>Analyzer</OutputItemType>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="ILRepack" Version="2.0.18" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" PrivateAssets="all" />
+    <PackageReference Include="Lextm.SharpSnmpLib" Version="12.5.5" />
+    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
+  </ItemGroup>
+
+  <!-- Post-build event: Merge all output assemblies into a single DLL using ILRepack -->
+  <Target Name="ILRepackMerge" AfterTargets="Build">
+    <PropertyGroup>
+      <_OutputDir>$(OutputPath)</_OutputDir>
+      <_MainAssembly>$(_OutputDir)$(AssemblyName).Original.dll</_MainAssembly>
+      <_MergedAssembly>$(_OutputDir)$(AssemblyName).dll</_MergedAssembly>
+    </PropertyGroup>
+    <ItemGroup>
+      <_AssembliesToMerge Include="$(_MainAssembly)" />
+      <_AssembliesToMerge Include="$(_OutputDir)SharpSnmpPro.Mib.dll" />
+      <_AssembliesToMerge Include="$(_OutputDir)SharpSnmpLib.dll" />
+      <_AssembliesToMerge Include="$(_OutputDir)Antlr4.Runtime.Standard.dll" />
+    </ItemGroup>
+    <Move SourceFiles="$(_MergedAssembly)" DestinationFiles="$(_MainAssembly)" Condition="Exists('$(_MergedAssembly)')" />
+    <Exec Command="&quot;$(ILRepack)&quot; /wildcards /internalize /lib:$(_OutputDir) /out:$(_MergedAssembly) @( _AssembliesToMerge->'&quot;%(FullPath)&quot;', ' ' )" Condition="Exists('$(ILRepack)')" />
+    <!-- Remove all merged assemblies except the merged output -->
+    <Delete Files="@(_AssembliesToMerge)" Condition="Exists('$(_MergedAssembly)')" />
+    <Message Importance="high" Text="ILRepack merged assemblies to $(_MergedAssembly) (replaced original)" />
+  </Target>
+
+  <!-- Reference SharpSnmpPro.Mib and ensure it's copied to the output -->
+  <ItemGroup>
+    <ProjectReference Include="..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj">
+      <Private>true</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+</Project>
