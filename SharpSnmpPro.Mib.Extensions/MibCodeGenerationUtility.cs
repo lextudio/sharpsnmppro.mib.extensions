@@ -89,7 +89,12 @@ namespace Lextm.SharpSnmpPro.Mib.Extensions
         {
             if (obj is ObjectTypeMacro ot) // Check for ObjectTypeMacro (scalar or column objects)
             {
-                var oid = ot.GetObjectIdentifier().ToString();
+                if (ot.Type == DefinitionType.Entry)
+                {
+                    return; // Skip Entry types
+                }
+
+                var oid = ObjectIdentifier.Convert(ot.GetObjectIdentifier());
                 sb.AppendLine();
                 sb.AppendLine("    /// <remarks>");
                 sb.AppendLine($"    /// * ID:");
@@ -129,18 +134,7 @@ namespace Lextm.SharpSnmpPro.Mib.Extensions
 
                 // Determine if this is a scalar or tabular object
                 var parentType = ot.Parent?.GetType().Name ?? string.Empty;
-                if (parentType.Contains("TableEntry"))
-                {
-                    // Table column
-                    sb.AppendLine($"    public sealed partial class {ot.Name} : ScalarObject");
-                    sb.AppendLine("    {");
-                    sb.AppendLine($"        public {ot.Name}(string index) : base(\"{oid}.\" + index)");
-                    sb.AppendLine("        {");
-                    sb.AppendLine("            OnCreate();");
-                    sb.AppendLine("        }");
-                    sb.AppendLine("    }");
-                }
-                else if (ot.Type == DefinitionType.Table)
+                if (ot.Type == DefinitionType.Table)
                 {
                     // Table object
                     sb.AppendLine($"    public sealed partial class {ot.Name} : TableObject");
@@ -151,22 +145,26 @@ namespace Lextm.SharpSnmpPro.Mib.Extensions
                     sb.AppendLine("        {");
                     sb.AppendLine("            get { return _elements; }");
                     sb.AppendLine("        }");
+                    sb.AppendLine();
                     sb.AppendLine($"        public {ot.Name}()");
                     sb.AppendLine("        {");
                     sb.AppendLine("            OnCreate();");
                     sb.AppendLine("        }");
                     sb.AppendLine("    }");
                 }
-                else if (ot.Type == DefinitionType.Entry)
-                {
-                    // IMPORTANT: generate nothing.
-                }
                 else
                 {
                     // Scalar object
                     sb.AppendLine($"    public sealed partial class {ot.Name} : ScalarObject");
                     sb.AppendLine("    {");
-                    sb.AppendLine($"        public {ot.Name}() : base(\"{oid}.0\")");
+                    if (ot.Type == DefinitionType.Scalar)
+                    {
+                        sb.AppendLine($"        public {ot.Name}() : base(\"{oid}.0\")");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"        public {ot.Name}(params string[] indexes) : base(\"{oid}.{{0}}\", string.Join('.', indexes))");
+                    }
                     sb.AppendLine("        {");
                     sb.AppendLine("            OnCreate();");
                     sb.AppendLine("        }");
