@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,332 +15,115 @@ using Lextm.SharpSnmpPro.Mib.Extensions;
 
 namespace MibSourceGenerator
 {
+
     [Generator]
-    public class MibGenerator : ISourceGenerator
+    public class MibGenerator : IIncrementalGenerator
     {
-        public void Initialize(GeneratorInitializationContext context)
+        public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            // No configuration attributes needed; nothing to register.
-        }
+            // Debugger.Launch();
+            // 1. Get all .txt files from AdditionalFiles
+            var txtFiles = context.AdditionalTextsProvider
+                .Where(f => f.Path != null && f.Path.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                .Collect();
 
-        public void Execute(GeneratorExecutionContext context)
-        {
-            try
-            {
-                // Add this line for source generator debugging
-                #if DEBUG
-                if (!System.Diagnostics.Debugger.IsAttached)
-                {
-                    LogMessage(context, "Attempting to launch debugger for source generator");
-                    //System.Diagnostics.Debugger.Launch();
-                }
-                #endif
-
-                LogMessage(context, $"Source Generator executing in process {System.Diagnostics.Process.GetCurrentProcess().Id}");
-
-                // Only use AdditionalFiles for configuration; no attributes or config files.
-
-                // Load the list of customized modules (which should only have Generated.g.cs files)
-                var customizedModules = LoadCustomizedModules(context);
-
-                // Find all .txt files in AdditionalFiles (potential MIB documents)
-                var mibTxtFiles = context.AdditionalFiles
-                    .Where(f => Path.GetExtension(f.Path).Equals(".txt", StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-
-                if (!mibTxtFiles.Any())
-                {
-                    LogWarning(context, "No .txt MIB files were found in the project. MIB code generation skipped.");
-                    return;
-                }
-
-                // Find .mibs files in AdditionalFiles
-                var mibsFiles = FindMibsFiles(context);
-                if (!mibsFiles.Any())
-                {
-                    LogWarning(context, "No .mibs files were found in the project. MIB code generation skipped.");
-                    return;
-                }
-
-                // Build a set of all .txt file paths that are listed in any .mibs file
-                var mibsTxtSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var mibsFilePath in mibsFiles)
-                {
-                    var mibsAdditional = context.AdditionalFiles.FirstOrDefault(f => f.Path == mibsFilePath);
-                    if (mibsAdditional == null)
-                        continue;
-                    var content = mibsAdditional.GetText(context.CancellationToken)?.ToString() ?? string.Empty;
-                    foreach (var line in content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            // 2. Get all .mibs files and parse them into a set of .txt file paths to generate
+            var mibsTxtSet = context.AdditionalTextsProvider
+                .Where(f => f.Path != null && f.Path.EndsWith(".mibs", StringComparison.OrdinalIgnoreCase))
+                .Collect()
+                .Select((mibsFiles, ct) => {
+                    var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var mibsFile in mibsFiles)
                     {
-                        if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("//"))
-                            continue;
-                        var mibPath = line.Trim();
-                        // If the path is not absolute, make it relative to the .mibs file
-                        if (!Path.IsPathRooted(mibPath))
+                        var content = mibsFile.GetText(ct)?.ToString() ?? string.Empty;
+                        var folder = Path.GetDirectoryName(mibsFile.Path);
+                        foreach (var line in content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
                         {
-                            mibPath = Path.Combine(Path.GetDirectoryName(mibsFilePath), mibPath);
+                            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("//")) continue;
+                            set.Add(Path.Combine(folder, line.Trim()));
                         }
-                        mibsTxtSet.Add(mibPath);
                     }
-                }
+                    return set;
+                });
 
-                // Compile all .txt files as MIB documents
+            // 3. Get all .customized files and parse them into a set of module names to suppress customizable file generation
+            var customizedModules = context.AdditionalTextsProvider
+                .Where(f => f.Path != null && f.Path.EndsWith(".customized", StringComparison.OrdinalIgnoreCase))
+                .Collect()
+                .Select((customizedFiles, ct) => {
+                    var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var customizedFile in customizedFiles)
+                    {
+                        var content = customizedFile.GetText(ct)?.ToString() ?? string.Empty;
+                        foreach (var line in content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("//")) continue;
+                            set.Add(line.Trim());
+                        }
+                    }
+                    return set;
+                });
+
+            // 4. Combine all three sources
+            var allInputs = txtFiles.Combine(mibsTxtSet).Combine(customizedModules);
+
+            context.RegisterSourceOutput(allInputs, (spc, tuple) =>
+            {
+                var txtFilesList = tuple.Left.Left;
+                var mibsTxtSet = tuple.Left.Right;
+                var customizedModules = tuple.Right;
+
+                // 2. Use Parser2 and Assembler to compile all .txt files to memory as loaded modules
                 var registry = new ErrorRegistry();
-                registry.ErrorAdded += (sender, args) => LogError(context, $"MIB Compiler: {args}");
-                registry.WarningAdded += (sender, args) => LogWarning(context, $"MIB Compiler: {args}");
-
+                registry.ErrorAdded += (sender, args) => { };
+                registry.WarningAdded += (sender, args) => { };
                 var allModules = new List<Module>();
-                foreach (var txtFile in mibTxtFiles)
+                foreach (var txtFile in txtFilesList)
                 {
                     try
                     {
-                        LogMessage(context, $"Compiling MIB document: {txtFile.Path}");
                         var modules = Parser2.Compile(txtFile.Path, registry);
                         allModules.AddRange(modules);
                     }
-                    catch (Exception ex)
-                    {
-                        LogError(context, $"Error compiling MIB file {txtFile.Path}: {ex.Message}");
-                    }
+                    catch { }
                 }
-
                 if (!allModules.Any())
-                {
-                    LogMessage(context, "No MIB modules found for compilation");
                     return;
-                }
-
-                // Only generate C# files for modules whose source .txt file is listed in any .mibs file
                 var assembler = new Assembler("");
                 assembler.Assemble(allModules, registry);
 
-                var processedModules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                // 3. Find all .txt files specified in .mibs, as they should be generated to C#
                 foreach (var module in assembler.Tree.LoadedModules)
                 {
-                    // Only generate if the module's FileName is in mibsTxtSet
-                    if (module.Objects.Count == 0 || processedModules.Contains(module.Name))
+                    if (module.Objects.Count == 0)
                         continue;
                     if (!mibsTxtSet.Contains(module.FileName))
                         continue;
 
-                    processedModules.Add(module.Name);
-                    LogMessage(context, $"Generating source for {module.Name}");
-
-                    // Always generate the base implementation
                     var generatedCode = GenerateModuleCode(module);
-                    context.AddSource($"{module.Name}.Generated.g.cs", SourceText.From(generatedCode, Encoding.UTF8));
+                    spc.AddSource($"{module.Name}.Generated.g.cs", SourceText.From(generatedCode, Encoding.UTF8));
 
-                    // Only generate and add customizable implementation if this module is not in the customized list
+                    // 4. Learn which modules from .customized shouldn't be generated with the customizable file
                     if (!customizedModules.Contains(module.Name))
                     {
                         var customCode = GenerateCustomModuleCode(module);
-                        TryCreatePhysicalCustomFile(context, module, customCode);
-                        context.AddSource($"{module.Name}.g.cs", SourceText.From(customCode, Encoding.UTF8));
-                    }
-                    else
-                    {
-                        LogMessage(context, $"Skipping customizable code generation for {module.Name} (found in .customized file)");
+                        spc.AddSource($"{module.Name}.g.cs", SourceText.From(customCode, Encoding.UTF8));
                     }
                 }
-
-                LogMessage(context, "MIB compilation completed successfully");
-            }
-            catch (Exception ex)
-            {
-                LogError(context, $"An error occurred during MIB code generation: {ex.Message}\n{ex.StackTrace}");
-            }
+            });
         }
 
-        private List<string> FindMibsFiles(GeneratorExecutionContext context)
-        {
-            // Look for .mibs files in the AdditionalFiles
-            return context.AdditionalFiles
-                .Where(file => Path.GetExtension(file.Path).Equals(".mibs", StringComparison.OrdinalIgnoreCase))
-                .Select(file => file.Path)
-                .ToList();
-        }
 
-        private void ProcessMibsFile(GeneratorExecutionContext context, ErrorRegistry registry, List<Module> modules, string mibsFilePath)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(mibsFilePath))
-                {
-                    LogError(context, ".mibs file path is empty. Skipping.");
-                    return;
-                }
-                LogMessage(context, $"Processing .mibs file: {mibsFilePath}");
+        // No longer needed in incremental generator
 
-                string mibsFileDirectory = string.Empty;
-                try
-                {
-                    mibsFileDirectory = Path.GetDirectoryName(mibsFilePath);
-                }
-                catch (Exception ex)
-                {
-                    LogError(context, $"Failed to get directory name for .mibs file '{mibsFilePath}': {ex.Message}");
-                    return;
-                }
 
-                string content = string.Empty;
-                // Use AdditionalFiles mechanism for file access only (no direct file IO)
-                var additionalFile = context.AdditionalFiles.FirstOrDefault(f => f.Path == mibsFilePath);
-                if (additionalFile != null)
-                {
-                    content = additionalFile.GetText(context.CancellationToken)?.ToString() ?? string.Empty;
-                }
-                else
-                {
-                    LogError(context, $".mibs file {mibsFilePath} not found in AdditionalFiles (file IO not allowed in analyzers)");
-                    return;
-                }
+        // No longer needed in incremental generator
 
-                if (string.IsNullOrWhiteSpace(content))
-                {
-                    LogWarning(context, $".mibs file {mibsFilePath} is empty. Skipping.");
-                    return;
-                }
 
-                var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                LogMessage(context, $"Found {lines.Count(l => !string.IsNullOrWhiteSpace(l) && !l.TrimStart().StartsWith("//"))} MIB files in .mibs file");
+        // No longer needed in incremental generator
 
-                // Directory listing removed for analyzer compliance.
 
-                // Process each MIB file specified in the .mibs file
-                foreach (var line in lines)
-                {
-                    if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("//"))
-                        continue; // Skip empty lines and comments
-
-                    var mibFilePathForLog = line.Trim();
-                    if (string.IsNullOrEmpty(mibFilePathForLog))
-                    {
-                        LogWarning(context, "Encountered empty MIB file path in .mibs file. Skipping.");
-                        continue;
-                    }
-                    if (!Path.IsPathRooted(mibFilePathForLog) && !string.IsNullOrEmpty(mibsFileDirectory))
-                    {
-                        mibFilePathForLog = Path.Combine(mibsFileDirectory, mibFilePathForLog);
-                    }
-
-                    // File.Exists not allowed in analyzers; skip existence check.
-
-                    try
-                    {
-                        LogMessage(context, $"Compiling MIB file: {mibFilePathForLog}");
-                        var existingModuleNames = new HashSet<string>(modules.Select(m => m.Name), StringComparer.OrdinalIgnoreCase);
-                        var compiledModules = Parser2.Compile(mibFilePathForLog, registry);
-                        foreach (var compiledModule in compiledModules)
-                        {
-                            LogMessage(context, $"Module {compiledModule.Name} has {compiledModule.Imports.Count} imports:");
-                            foreach (var import in compiledModule.Imports)
-                            {
-                                var resolvedStatus = import.Module == null ? "UNRESOLVED" : "resolved";
-                                LogMessage(context, $"  - Import: {import.Name} from module: {import.Module} ({resolvedStatus})");
-                            }
-                        }
-                        foreach (var compiledModule in compiledModules)
-                        {
-                            if (!existingModuleNames.Contains(compiledModule.Name))
-                            {
-                                modules.Add(compiledModule);
-                                existingModuleNames.Add(compiledModule.Name);
-                                LogMessage(context, $"Added module: {compiledModule.Name} from {mibFilePathForLog}");
-                            }
-                            else
-                            {
-                                LogMessage(context, $"Skipping duplicate module: {compiledModule.Name} from {mibFilePathForLog}");
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError(context, $"Error compiling MIB file {mibFilePathForLog}: {ex.Message}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError(context, $"Error processing .mibs file {mibsFilePath}: {ex.Message}");
-            }
-        }
-
-        private void ProcessMibFile(GeneratorExecutionContext context, ErrorRegistry registry, List<Module> modules, string mibFilePath)
-        {
-            // File IO not allowed in analyzers; this method should not be used.
-            LogError(context, "Direct file IO is not allowed in analyzers. Use AdditionalFiles only.");
-        }
-
-        private void ProcessMibsFile(GeneratorExecutionContext context, AdditionalText mibsFile)
-        {
-            // Read the content of the .mibs file
-            var content = mibsFile.GetText(context.CancellationToken)?.ToString() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(content))
-            {
-                return;
-            }
-            // Parse the .mibs file to get MIB file paths (no file IO, so just collect the lines)
-            var mibFilePaths = new List<string>();
-            foreach (var line in content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("//"))
-                {
-                    continue; // Skip empty lines and comments
-                }
-                var mibPath = line.Trim();
-                // If the path is not absolute, make it relative to the .mibs file
-                if (!Path.IsPathRooted(mibPath))
-                {
-                    mibPath = Path.Combine(Path.GetDirectoryName(mibsFile.Path), mibPath);
-                }
-                // Do not check File.Exists; just add the path
-                mibFilePaths.Add(mibPath);
-            }
-            if (!mibFilePaths.Any())
-            {
-                return;
-            }
-            // Compile MIB files and generate code
-            var registry = new ErrorRegistry();
-            registry.ErrorAdded += (sender, args) => ReportCompileError(context, args.ToString());
-            registry.WarningAdded += (sender, args) => ReportCompileWarning(context, args.ToString());
-            try
-            {
-                // Compile each MIB file
-                var modules = new List<Module>();
-                foreach (var mibPath in mibFilePaths)
-                {
-                    try
-                    {
-                        var compiledModules = Parser2.Compile(mibPath, registry);
-                        modules.AddRange(compiledModules);
-                    }
-                    catch (Exception ex)
-                    {
-                        ReportCompileError(context, $"Failed to compile {mibPath}: {ex.Message}");
-                    }
-                }
-                // Assemble the modules (no temp dir/file IO allowed, so pass null or empty string)
-                var assembler = new Assembler("");
-                assembler.Assemble(modules, registry);
-                // Generate C# code for each module
-                foreach (var module in modules)
-                {
-                    if (module.Objects.Count == 0)
-                    {
-                        continue;
-                    }
-                    string generatedCode = GenerateModuleCode(module);
-                    string fileName = $"{module.Name}.Generated.cs";
-                    // Add the generated code to the compilation
-                    context.AddSource(fileName, SourceText.From(generatedCode, Encoding.UTF8));
-                }
-            }
-            catch (Exception ex)
-            {
-                ReportCompileError(context, $"Unexpected error during MIB compilation: {ex.Message}");
-            }
-        }
+        // No longer needed in incremental generator
         
         /// <summary>
         /// Generates code for a Module in the format expected for generated files.
