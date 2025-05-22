@@ -38,7 +38,7 @@
 
   <!-- Reference SharpSnmpPro.Mib and ensure it's copied to the output -->
   <ItemGroup>
-    <ProjectReference Include="..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj">
+    <ProjectReference Include="..\..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj">
       <Private>true</Private>
     </ProjectReference>
     <ProjectReference Include="..\SharpSnmpPro.Mib.Extensions\SharpSnmpPro.Mib.Extensions.csproj">
