@@ -50,9 +50,7 @@ namespace Lextm.SharpSnmpPro.Mib.Extensions
             sb.AppendLine();
             sb.AppendLine($"namespace {module.Name.Replace("-", "_")}");
             sb.AppendLine("{");
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Generates the module code for a Module.
         /// </summary>
         /// <param name="module">The Module to generate code for.</param>
@@ -74,6 +72,12 @@ namespace Lextm.SharpSnmpPro.Mib.Extensions
                 {
                     GenerateCustomObjectCode(sb, obj);
                 }
+            }
+            
+            // Generate ModuleRegister class in the customizable file
+            if (!isGeneratedFile)
+            {
+                GenerateModuleRegisterCode(sb, module);
             }
 
             sb.AppendLine("}");
@@ -146,7 +150,7 @@ namespace Lextm.SharpSnmpPro.Mib.Extensions
                     sb.AppendLine("            get { return _elements; }");
                     sb.AppendLine("        }");
                     sb.AppendLine();
-                    sb.AppendLine($"        public {ot.Name}()");
+                    sb.AppendLine($"        public {ot.Name}() : base(\"{oid}.0\")");
                     sb.AppendLine("        {");
                     sb.AppendLine("            OnCreate();");
                     sb.AppendLine("        }");
@@ -226,7 +230,51 @@ namespace Lextm.SharpSnmpPro.Mib.Extensions
                 sb.AppendLine("        }");
                 sb.AppendLine("    }");
             }
-        }
+        }        /// <summary>
+        /// Generates code for the ModuleRegister class in the customizable file.
+        /// </summary>
+        /// <param name="sb">The StringBuilder to append to.</param>
+        /// <param name="module">The Module to generate code for.</param>
+        public static void GenerateModuleRegisterCode(StringBuilder sb, Module module)
+        {
+            var moduleNamespace = module.Name.Replace("-", "_");
+            var objectNames = new List<string>();
+            foreach (var obj in module.Objects)
+            {
+                if (obj is ObjectTypeMacro ot && ot.Type != DefinitionType.Entry && ot.Type != DefinitionType.Column)
+                {
+                    objectNames.Add(ot.Name);
+                }
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("}");
+            sb.AppendLine();
+            sb.AppendLine("namespace Lextm.SharpSnmpPro.Mib");
+            sb.AppendLine("{");
+            sb.AppendLine("    /// <summary>");
+            sb.AppendLine($"    /// Registration class for {module.Name} MIB objects.");
+            sb.AppendLine("    /// </summary>");
+            sb.AppendLine("    public static partial class ModuleRegister");
+            sb.AppendLine("    {");
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// Registers all objects from this module to the specified object store.");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        /// <param name=\"store\">The object store to register objects with.</param>");
+            sb.AppendLine($"        public static void Register{moduleNamespace}(ObjectStore store)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            if (store == null)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                throw new ArgumentNullException(nameof(store));");
+            sb.AppendLine("            }");
+            sb.AppendLine();            foreach (var name in objectNames)
+            {
+                sb.AppendLine($"            store.Add(new {moduleNamespace}.{name}());");
+            }
+
+            sb.AppendLine("        }");
+            sb.AppendLine("    }");
+         }
 
         /// <summary>
         /// Gets the default value for a type.
