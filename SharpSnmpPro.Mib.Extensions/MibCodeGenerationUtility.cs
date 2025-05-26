@@ -219,7 +219,7 @@ namespace Lextm.SharpSnmpPro.Mib.Extensions
 
                 if (ot.MibAccess == Access.ReadOnly)
                 {
-                    sb.AppendLine("            set { throw new AccessFailureException(); }");
+                    sb.AppendLine("            set { if (CheckAccess) throw new AccessFailureException(); }");
                 }
                 else
                 {
