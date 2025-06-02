@@ -5,14 +5,14 @@
     <LangVersion>7.2</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net471</TargetFrameworks>
+    <TargetFrameworks>net8.0;net471</TargetFrameworks>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Version>1.0.0</Version>
     <Description>#SNMP Pro Objects Sample.</Description>
     <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Lextm.SharpSnmpLib" Version="12.5.3" />
+    <PackageReference Include="Lextm.SharpSnmpLib" Version="12.5.5" />
     <PackageReference Include="Samples.Engine" Version="1.0.0" />
   </ItemGroup>
 </Project>
