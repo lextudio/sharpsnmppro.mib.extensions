@@ -6,6 +6,9 @@
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="sharpsnmppro.txt" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ILRepack" Version="2.0.18" />
