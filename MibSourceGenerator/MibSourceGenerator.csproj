@@ -16,7 +16,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" PrivateAssets="all" />
     <PackageReference Include="Lextm.SharpSnmpLib" Version="12.5.5" />
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
-    <PackageReference Include="SharpSnmpPro.Mib" Version="2.1.3" Condition="!Exists('..\..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj')" />
+    <PackageReference Include="SharpSnmpPro.Mib" Version="2.1.4" Condition="!Exists('..\..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj')" />
   </ItemGroup>
 
   <!-- Post-build event: Merge all output assemblies into a single DLL using ILRepack -->
