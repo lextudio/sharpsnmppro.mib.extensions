@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Lextm.SharpSnmpLib" />
-    <PackageReference Include="Lextm.SharpSnmpPro.Mib" Condition="!Exists('..\..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj')" />
+    <PackageReference Include="SharpSnmpPro.Mib" Condition="!Exists('..\..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj')" />
   </ItemGroup>
 
   <ItemGroup>
