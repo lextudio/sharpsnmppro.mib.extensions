@@ -49,7 +49,7 @@ namespace Lextm.SharpSnmpPro.Mib.Registry
                 // Write generated file
                 var generatedContent = MibCodeGenerationUtility.GenerateModuleCode(module,
                     $"#SNMP MIB Compiler Pro {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version}",
-                    true);
+                    true, true);
                 generated.Write(generatedContent);
 
                 // Write custom file if needed
@@ -57,7 +57,7 @@ namespace Lextm.SharpSnmpPro.Mib.Registry
                 {
                     var customContent = MibCodeGenerationUtility.GenerateModuleCode(module,
                         $"#SNMP MIB Compiler Pro {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version}",
-                        false);
+                        false, true);
                     custom.Write(customContent);
                 }
             }
