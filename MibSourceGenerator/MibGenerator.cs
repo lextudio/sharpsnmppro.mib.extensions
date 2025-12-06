@@ -133,7 +133,7 @@ namespace MibSourceGenerator
         /// <returns>A string containing the generated code.</returns>
         private string GenerateModuleCode(Module module)
         {
-            return MibCodeGenerationUtility.GenerateModuleCode(module, $"MibSourceGenerator {GetType().Assembly.GetName().Version}", true);
+            return MibCodeGenerationUtility.GenerateModuleCode(module, $"MibSourceGenerator {GetType().Assembly.GetName().Version}", true, true);
         }
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace MibSourceGenerator
         /// <returns>A string containing the generated code.</returns>
         private string GenerateCustomModuleCode(Module module)
         {
-            return MibCodeGenerationUtility.GenerateModuleCode(module, $"MibSourceGenerator {GetType().Assembly.GetName().Version}", false);
+            return MibCodeGenerationUtility.GenerateModuleCode(module, $"MibSourceGenerator {GetType().Assembly.GetName().Version}", false, true);
         }
         private void LogMessage(GeneratorExecutionContext context, string message)
         {
