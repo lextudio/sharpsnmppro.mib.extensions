@@ -106,7 +106,7 @@ namespace Lextm.SharpSnmpPro.Mib.Extensions
                     return; // Skip Entry types
                 }
 
-                var oid = ObjectIdentifier.Convert(ot.GetObjectIdentifier());
+                var oid = string.Join(".", ot.GetObjectIdentifier());
                 sb.AppendLine();
                 sb.AppendLine("    /// <remarks>");
                 sb.AppendLine($"    /// * ID:");
