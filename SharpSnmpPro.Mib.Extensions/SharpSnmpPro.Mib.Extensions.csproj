@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net471</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>Lextm.SharpSnmpPro.Mib</RootNamespace>
     <AssemblyName>SharpSnmpPro.Mib.Extensions</AssemblyName>
     <SignAssembly>true</SignAssembly>
@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Lextm.SharpSnmpLib" />
+    <PackageReference Include="Lextm.SharpSnmpLib" VersionOverride="13.0.0-beta.2" />
     <PackageReference Include="SharpSnmpPro.Mib" Condition="!Exists('..\..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj')" />
   </ItemGroup>
 

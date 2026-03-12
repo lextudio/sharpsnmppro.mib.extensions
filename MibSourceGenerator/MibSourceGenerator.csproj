@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <OutputItemType>Analyzer</OutputItemType>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
@@ -11,35 +11,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ILRepack" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
-    <PackageReference Include="Lextm.SharpSnmpLib" />
+    <PackageReference Include="Lextm.SharpSnmpLib" VersionOverride="13.0.0-beta.2" />
     <PackageReference Include="Antlr4.Runtime.Standard" />
     <PackageReference Include="SharpSnmpPro.Mib" Condition="!Exists('..\..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj')" />
   </ItemGroup>
-
-  <!-- Post-build event: Merge all output assemblies into a single DLL using ILRepack -->
-  <Target Name="ILRepackMerge" AfterTargets="Build">
-    <PropertyGroup>
-      <_OutputDir>$(OutputPath)</_OutputDir>
-      <_MainAssembly>$(_OutputDir)$(AssemblyName).Original.dll</_MainAssembly>
-      <_MergedAssembly>$(_OutputDir)$(AssemblyName).dll</_MergedAssembly>
-    </PropertyGroup>
-    <ItemGroup>
-      <_AssembliesToMerge Include="$(_MainAssembly)" />
-      <_AssembliesToMerge Include="$(_OutputDir)SharpSnmpPro.Mib.dll" />
-      <_AssembliesToMerge Include="$(_OutputDir)SharpSnmpPro.Mib.Extensions.dll" />
-      <_AssembliesToMerge Include="$(_OutputDir)SharpSnmpLib.dll" />
-      <_AssembliesToMerge Include="$(_OutputDir)Antlr4.Runtime.Standard.dll" />
-      <_AssembliesToMerge Include="$(_OutputDir)System.Configuration.ConfigurationManager.dll" />
-    </ItemGroup>
-    <Move SourceFiles="$(_MergedAssembly)" DestinationFiles="$(_MainAssembly)" Condition="Exists('$(_MergedAssembly)')" />
-    <Exec Command="&quot;$(ILRepack)&quot; /wildcards /internalize /lib:$(_OutputDir) /out:$(_MergedAssembly) @( _AssembliesToMerge->'&quot;%(FullPath)&quot;', ' ' )" Condition="Exists('$(ILRepack)')" />
-    <!-- Remove all merged assemblies except the merged output -->
-    <Delete Files="@(_AssembliesToMerge)" Condition="Exists('$(_MergedAssembly)')" />
-    <Message Importance="high" Text="ILRepack merged assemblies to $(_MergedAssembly) (replaced original)" />
-  </Target>
 
   <!-- Reference SharpSnmpPro.Mib and ensure it's copied to the output -->
   <ItemGroup>
