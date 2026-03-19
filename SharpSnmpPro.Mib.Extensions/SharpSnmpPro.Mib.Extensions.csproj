@@ -12,11 +12,11 @@
 
   <ItemGroup>
     <PackageReference Include="Lextm.SharpSnmpLib" VersionOverride="13.0.0-beta.2" />
-    <PackageReference Include="SharpSnmpPro.Mib" Condition="!Exists('..\..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj')" />
+    <PackageReference Include="SharpSnmpPro.Mib" Condition="!Exists('../../../pro/SharpSnmpPro.Mib/SharpSnmpPro.Mib.csproj')" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj" Condition="Exists('..\..\..\SharpSnmpPro.Mib\SharpSnmpPro.Mib.csproj')" />
+    <ProjectReference Include="../../../pro/SharpSnmpPro.Mib/SharpSnmpPro.Mib.csproj" Condition="Exists('../../../pro/SharpSnmpPro.Mib/SharpSnmpPro.Mib.csproj')" />
   </ItemGroup>
 
   <ItemGroup>

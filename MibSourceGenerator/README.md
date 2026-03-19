@@ -100,6 +100,8 @@ Once you copy a customizable partial class file to your project (such as `IP-MIB
 IP-MIB
 ```
 
+If you need to create that initial customizable file on demand before adding the module to `.customized`, use [`../MibCustomFileGenerator`](../MibCustomFileGenerator/README.md).
+
 Example of implementing a partial class:
 
 ```csharp
