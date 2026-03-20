@@ -13,7 +13,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
-    <PackageReference Include="Lextm.SharpSnmpLib" VersionOverride="13.0.0-beta.2" />
+    <PackageReference Include="Lextm.SharpSnmpLib" VersionOverride="13.0.0-beta.3" />
     <PackageReference Include="Antlr4.Runtime.Standard" />
     <PackageReference Include="SharpSnmpPro.Mib" Condition="!Exists('../../../pro/SharpSnmpPro.Mib/SharpSnmpPro.Mib.csproj')" />
   </ItemGroup>

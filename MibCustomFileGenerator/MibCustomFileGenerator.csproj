@@ -10,6 +10,6 @@
   <ItemGroup>
     <ProjectReference Include="../../../pro/SharpSnmpPro.Mib/SharpSnmpPro.Mib.csproj" />
     <Compile Include="..\SharpSnmpPro.Mib.Extensions\MibCodeGenerationUtility.cs" Link="MibCodeGenerationUtility.cs" />
-    <PackageReference Include="Lextm.SharpSnmpLib" VersionOverride="13.0.0-beta.2" />
+    <PackageReference Include="Lextm.SharpSnmpLib" VersionOverride="13.0.0-beta.3" />
   </ItemGroup>
 </Project>
